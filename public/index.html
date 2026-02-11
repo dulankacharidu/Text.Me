@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text.Me LAN</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>Text.Me LAN</h1>
+    <p class="subtitle">Live text + handwriting notes over local network (Windows / iPhone / Android).</p>
+    <p class="hint">LAN only. If already paired before, it auto-connects (no PIN needed). Use PIN only for first-time pair.</p>
+
+    <section class="card">
+      <div id="status">Connecting...</div>
+      <div class="pairing">
+        <button id="createCodeBtn">Create PIN</button>
+        <input id="joinCodeInput" placeholder="Enter PIN" maxlength="6" />
+        <button id="joinCodeBtn">Join PIN</button>
+      </div>
+      <div id="pairCode" class="pair-code"></div>
+    </section>
+
+    <section class="toolbar card">
+      <button id="prevPageBtn">◀ Prev</button>
+      <span id="pageInfo">Page 1 / 1</span>
+      <button id="nextPageBtn">Next ▶</button>
+      <button id="newPageBtn">+ New Page</button>
+      <button id="clearDrawBtn">Clear Drawing</button>
+    </section>
+
+    <section class="editor card">
+      <textarea id="text" placeholder="Type or paste text here..."></textarea>
+      <canvas id="canvas" width="1200" height="420"></canvas>
+    </section>
+  </main>
+
+  <div id="stickyPopup" class="sticky hidden">New live update from your partner.</div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

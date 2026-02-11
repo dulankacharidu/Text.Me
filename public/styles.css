@@ -1,0 +1,27 @@
+:root { color-scheme: light dark; font-family: Arial, sans-serif; }
+body { margin: 0; background: #f4f5f8; color: #222; }
+.app { max-width: 900px; margin: 20px auto; padding: 0 12px 40px; }
+.card { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+h1 { margin-bottom: 4px; }
+.subtitle { margin-top: 0; opacity: .8; }
+.pairing { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+input, button, textarea { font: inherit; }
+button { padding: 8px 12px; border-radius: 6px; border: 1px solid #999; cursor: pointer; }
+input { padding: 8px; border-radius: 6px; border: 1px solid #aaa; width: 130px; }
+.pair-code { font-size: 22px; font-weight: 700; margin-top: 8px; letter-spacing: 4px; }
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+textarea { width: 100%; min-height: 180px; resize: vertical; border: 1px solid #aaa; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+canvas { width: 100%; border: 1px solid #aaa; border-radius: 8px; touch-action: none; background: #fffdf8; }
+.sticky {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  background: #ffe46b;
+  border: 1px solid #d5b100;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+.hidden { display: none; }
+
+.hint { margin-top: 0; margin-bottom: 12px; opacity: .85; }
