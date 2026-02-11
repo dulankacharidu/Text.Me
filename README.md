@@ -34,6 +34,7 @@ Open from phone in same LAN:
 ## LAN-only behavior
 - Server rejects non-LAN clients (internet/public IP access is blocked).
 - Use this for private local text/code sharing between phone and PC.
+- 
 
 ## Windows one-click start
 - Double-click `start-textme.bat`.
