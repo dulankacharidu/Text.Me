@@ -1,6 +1,6 @@
-# Text.Me LAN
+# Text.Me on LAN
 
-Simple, fast LAN live note app for:
+##Simple, fast LAN live note app for:
 - Windows PCs
 - iPhone (Safari/PWA)
 - Android phones (Chrome/PWA)
@@ -40,3 +40,10 @@ Open from phone in same LAN:
 - Double-click `start-textme.bat`.
 - On first run it installs dependencies, then starts the app.
 - It opens server on `http://localhost:3000` (and your LAN IP for iPhone/other devices).
+
+   
+♥️ Feedback
+Your feedback is essential to helping us improve this experience. Please use the “Files Changed” preview feedback discussion to report problems, ask questions, and review known issues.
+- Developed By : Codex
+- Idea and Design By : Dulanka Charidu 
+
