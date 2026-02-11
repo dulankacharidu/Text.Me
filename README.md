@@ -34,3 +34,9 @@ Open from phone in same LAN:
 ## LAN-only behavior
 - Server rejects non-LAN clients (internet/public IP access is blocked).
 - Use this for private local text/code sharing between phone and PC.
+- 
+
+## Windows one-click start
+- Double-click `start-textme.bat`.
+- On first run it installs dependencies, then starts the app.
+- It opens server on `http://localhost:3000` (and your LAN IP for iPhone/other devices).
