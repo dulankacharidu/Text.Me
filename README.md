@@ -14,18 +14,28 @@
 
 ## Quick start
 
+Download In Linux :
+`````Download & Install on Linux``````
+sudo apt update && upgrade -y
+sudo apt install git
+sudo apt install npm
+git clone https://github.com/dulankacharidu/Text.Me.git
+cd Text.me
+`````````
+
 ```bash
 npm install
 npm start
 ```
 
-Open on host machine:
-- `http://localhost:3000`
+# Open on host machine:
+ - `http://localhost:3000`
 
-Open from phone in same LAN:
-- `http://<HOST_LAN_IP>:3000`
+# Open from phone in same LAN:
+ - `http://<HOST_LAN_IP>:3000`
 
 ## Pairing flow
+
 1. If devices were paired before: open app on both devices and it auto-connects.
 2. If not paired yet: on first device click **Create PIN**.
 3. On second device enter PIN and click **Join PIN**.
