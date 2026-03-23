@@ -1,9 +1,16 @@
 # Text.Me on LAN
 
+<img width="975" height="1000" alt="Webpanel" src="https://github.com/user-attachments/assets/7ffe38a6-2e45-4f9d-b62f-c66417074dab" />
+
 ##Simple, fast LAN live note app for:
 - Windows PCs
 - iPhone (Safari/PWA)
 - Android phones (Chrome/PWA)
+
+- ![9c3f68df-e73f-46a0-8d0b-2803879176a9](https://github.com/user-attachments/assets/35a94b8d-b302-45d0-856e-f15026f449f6)
+- ![WhatsApp Image 2026-03-24 at 00 31 06](https://github.com/user-attachments/assets/b639ca22-f8b2-42bf-8d1f-359df1b531b7)
+
+
 
 ## What this app does
 - Works on **local area network only** (LAN only).
