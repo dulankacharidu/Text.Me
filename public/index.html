@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text.Me LAN</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <section class="hero">
+      <p class="eyebrow">Offline LAN Local Texting ..</p>
+      <h1>Text.Me</h1>
+      <p class="subtitle">Live notes, file sharing, and handwriting sync across Windows, iPhone, and Android on the same local network.</p>
+      <p class="hint">LAN only. After first pairing, devices reconnect automatically. Use a PIN only when connecting to a new partner.</p>
+    </section>
+
+    <main class="app">
+      <section class="card status-card">
+        <div id="status" class="status-pill">Connecting...</div>
+        <div class="pairing">
+          <button id="createCodeBtn" class="primary-btn">Create PIN</button>
+          <input id="joinCodeInput" placeholder="Enter PIN" maxlength="6" />
+          <button id="joinCodeBtn">Join PIN</button>
+        </div>
+        <div id="pairCode" class="pair-code"></div>
+      </section>
+
+      <section class="toolbar card">
+        <button id="prevPageBtn">Prev</button>
+        <span id="pageInfo" class="page-chip">Page 1 / 1</span>
+        <button id="nextPageBtn">Next</button>
+        <button id="newPageBtn">New Page</button>
+        <button id="clearDrawBtn">Clear Drawing</button>
+      </section>
+
+      <section class="editor card">
+        <textarea id="text" placeholder="Type or paste text here..."></textarea>
+        <div class="upload-row">
+          <label class="upload-btn" for="fileInput">Upload File</label>
+          <button id="downloadNextBtn" type="button">Download File</button>
+          <input id="fileInput" type="file" />
+          <span id="uploadStatus" class="upload-status">Files stay on your local network server.</span>
+        </div>
+        <div id="incomingFiles" class="incoming-files"></div>
+        <div id="attachments" class="attachments"></div>
+        <canvas id="canvas" width="1200" height="420"></canvas>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-copy">
+        <p class="footer-title">Text.Me</p>
+        <p class="footer-text">Copyright (c) 2026 Dulanka Charidu. All rights reserved.</p>
+      </div>
+      <div class="social-links" aria-label="Social media links">
+        <a class="social-link" href="https://github.com/dulankacharidu" title="GitHub" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.72.5.1.66-.22.66-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.22-3.37-1.22-.45-1.18-1.11-1.49-1.11-1.49-.9-.64.07-.63.07-.63 1 .07 1.52 1.05 1.52 1.05.88 1.56 2.32 1.11 2.89.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.15-4.56-5.11 0-1.13.39-2.05 1.03-2.77-.11-.26-.45-1.31.1-2.73 0 0 .84-.28 2.75 1.06A9.3 9.3 0 0 1 12 6.84c.85 0 1.71.12 2.51.35 1.9-1.34 2.74-1.06 2.74-1.06.55 1.42.21 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.97-2.34 4.84-4.57 5.1.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.17.59.67.49A10.25 10.25 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"/></svg>
+        </a>
+        <a class="social-link" href="https://fb.com/dulankacharidu" title="Facebook" aria-label="Facebook">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8.2h2.77l.41-3.2H13.5V7.56c0-.93.26-1.56 1.58-1.56h1.69V3.13c-.29-.04-1.29-.13-2.45-.13-2.43 0-4.1 1.52-4.1 4.33V9.6H7.5v3.2h2.72V21h3.28Z"/></svg>
+        </a>
+        <a class="social-link" href="https://www.instagram.com/dulankacharidu" title="Instagram" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9a5.5 5.5 0 0 1-5.5 5.5h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 1.8A3.7 3.7 0 0 0 3.8 7.5v9a3.7 3.7 0 0 0 3.7 3.7h9a3.7 3.7 0 0 0 3.7-3.7v-9a3.7 3.7 0 0 0-3.7-3.7h-9Zm9.65 1.35a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.8A3.2 3.2 0 1 0 12 15.2 3.2 3.2 0 0 0 12 8.8Z"/></svg>
+        </a>
+        <a class="social-link" href="https://www.linkedin.com/in/dulankacharidu/" title="LinkedIn" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5A1.49 1.49 0 1 1 5 6.48a1.49 1.49 0 0 1-.02-2.98ZM3.5 8h3V20h-3V8Zm5 0h2.88v1.64h.04c.4-.76 1.38-1.64 2.84-1.64 3.04 0 3.6 2.05 3.6 4.71V20h-3v-6.42c0-1.53-.03-3.5-2.08-3.5-2.08 0-2.4 1.67-2.4 3.39V20h-3V8Z"/></svg>
+        </a>
+        <a class="social-link" href="https://www.youtube.com/dulankacharidu" title="YouTube" aria-label="YouTube">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 12s0-3.07-.39-4.55a2.9 2.9 0 0 0-2.04-2.06C19.08 5 12 5 12 5s-7.08 0-8.57.39A2.9 2.9 0 0 0 1.39 7.45C1 8.93 1 12 1 12s0 3.07.39 4.55a2.9 2.9 0 0 0 2.04 2.06C4.92 19 12 19 12 19s7.08 0 8.57-.39a2.9 2.9 0 0 0 2.04-2.06C23 15.07 23 12 23 12Zm-13 3.5v-7l6 3.5-6 3.5Z"/></svg>
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <div id="stickyPopup" class="sticky hidden">New live update from your partner.</div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

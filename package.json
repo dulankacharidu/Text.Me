@@ -1,0 +1,14 @@
+{
+  "name": "text-me-lan",
+  "version": "1.2.0",
+  "description": "Text.Me v1.2.0 - LAN text, handwriting, and file sharing for Windows/iOS/Android",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1",
+    "ws": "^8.18.0"
+  }
+}
