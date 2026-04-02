@@ -1,7 +1,8 @@
 @echo off
 setlocal EnableExtensions
 
-cd /d "%~dp0"
+set "ROOT_DIR=%~dp0.."
+cd /d "%ROOT_DIR%"
 
 set "APP_NAME=Text.Me LAN"
 set "PORT=80"
@@ -119,7 +120,7 @@ if %PORT% GTR 65535 set "PORT=80"
 goto :eof
 
 :CreateStartupShortcut
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$shortcutPath = [Environment]::ExpandEnvironmentVariables('%STARTUP_LINK%'); $target = 'wscript.exe'; $arguments = '""%~dp0launch-textme-hidden.vbs""'; $workingDir = '%~dp0'; $icon = (Get-Command node).Source; $shell = New-Object -ComObject WScript.Shell; $shortcut = $shell.CreateShortcut($shortcutPath); $shortcut.TargetPath = $target; $shortcut.Arguments = $arguments; $shortcut.WorkingDirectory = $workingDir; $shortcut.IconLocation = $icon + ',0'; $shortcut.Save()" >nul 2>nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$shortcutPath = [Environment]::ExpandEnvironmentVariables('%STARTUP_LINK%'); $target = 'wscript.exe'; $arguments = '""%~dp0launch-textme-hidden.vbs""'; $workingDir = '%ROOT_DIR%'; $icon = (Get-Command node).Source; $shell = New-Object -ComObject WScript.Shell; $shortcut = $shell.CreateShortcut($shortcutPath); $shortcut.TargetPath = $target; $shortcut.Arguments = $arguments; $shortcut.WorkingDirectory = $workingDir; $shortcut.IconLocation = $icon + ',0'; $shortcut.Save()" >nul 2>nul
 if errorlevel 1 (
   echo [WARN] Could not create the startup shortcut.
 ) else (

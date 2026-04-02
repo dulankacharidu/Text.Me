@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 set "PORT=80"
 if exist data\runtime-config.cmd call data\runtime-config.cmd

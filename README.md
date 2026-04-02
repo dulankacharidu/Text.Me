@@ -22,8 +22,7 @@ It is designed for private local-network use, with live sync between paired devi
 - Windows hidden background launcher
 - Linux background launcher
 - macOS background launcher
-- Optional Windows startup shortcut creation
-- Optional Linux/macOS login startup helpers
+- Optional startup/login helpers for each desktop OS
 - Optional `text.me` hosts alias on Windows, Linux, and macOS
 - Refreshed responsive UI with footer and social links
 
@@ -35,79 +34,101 @@ It is designed for private local-network use, with live sync between paired devi
 - Improved pair persistence after browser refresh or server restart
 - Fixed partner switching so old pair links are removed correctly
 - Added hidden Windows launcher to avoid a permanent command window
-- Added first-run Windows setup prompts for startup and hosts alias
 - Added configurable server port with default option `80`
 - Added helper scripts for adding/removing `text.me` in the hosts file
 - Added Linux and macOS launcher/support scripts
+- Cleaned repository structure into platform folders: `windows/`, `linux/`, `macos/`
 - Restyled the UI and footer branding
 
-## Project files
+## Repository structure
 
-- `server.js`: Express + WebSocket LAN server
-- `public/app.js`: client app logic
-- `public/index.html`: app layout
-- `public/styles.css`: UI styling
-- `start-textme.bat`: Windows launcher with setup prompts
-- `launch-textme-hidden.vbs`: hidden Windows background starter
-- `stop-textme.bat`: stops the running Windows server
-- `configure-textme.bat`: reruns Windows setup questions
-- `add-hosts-textme.bat`: adds `text.me` to Windows hosts
-- `remove-hosts-textme.bat`: removes `text.me` from Windows hosts
-- `start-textme.sh`: Linux/macOS launcher
-- `stop-textme.sh`: stops Linux/macOS background server
-- `configure-textme.sh`: reruns Linux/macOS setup
-- `add-hosts-textme.sh`: adds `text.me` to `/etc/hosts`
-- `remove-hosts-textme.sh`: removes `text.me` from `/etc/hosts`
-- `install-autostart-linux.sh`: creates Linux login autostart entry
-- `install-autostart-macos.sh`: creates macOS LaunchAgent
+Core app:
+- `server.js`
+- `package.json`
+- `public/`
+- `img/`
+
+Windows files:
+- `windows/start-textme.bat`
+- `windows/stop-textme.bat`
+- `windows/configure-textme.bat`
+- `windows/add-hosts-textme.bat`
+- `windows/remove-hosts-textme.bat`
+- `windows/launch-textme-hidden.vbs`
+
+Linux files:
+- `linux/start-textme.sh`
+- `linux/stop-textme.sh`
+- `linux/configure-textme.sh`
+- `linux/add-hosts-textme.sh`
+- `linux/remove-hosts-textme.sh`
+- `linux/install-autostart-linux.sh`
+
+macOS files:
+- `macos/start-textme.sh`
+- `macos/stop-textme.sh`
+- `macos/configure-textme.sh`
+- `macos/add-hosts-textme.sh`
+- `macos/remove-hosts-textme.sh`
+- `macos/install-autostart-macos.sh`
 
 ## Quick start
 
-### Option 1: Windows launcher
+### Windows
 
 Double-click:
 
 ```bat
-start-textme.bat
+windows\start-textme.bat
 ```
 
-On first setup it can ask:
-- which port to use: `80`, `3000`, or custom
-- whether to add Text.Me to Windows startup
-- whether to add `text.me` to the Windows hosts file
-
-If you want to rerun those questions later:
+Rerun setup:
 
 ```bat
-configure-textme.bat
+windows\configure-textme.bat
 ```
 
-### Option 2: Linux or macOS launcher
+### Linux
 
-Make the shell scripts executable once:
+Make scripts executable once:
 
 ```bash
-chmod +x start-textme.sh stop-textme.sh configure-textme.sh add-hosts-textme.sh remove-hosts-textme.sh install-autostart-linux.sh install-autostart-macos.sh
+chmod +x linux/*.sh
 ```
 
-Start the app:
+Start:
 
 ```bash
-./start-textme.sh
+./linux/start-textme.sh
 ```
 
-On first setup it can ask:
-- which port to use: `80`, `3000`, or custom
-- whether to add Text.Me to Linux/macOS login startup
-- whether to add `text.me` to `/etc/hosts`
-
-If you want to rerun those questions later:
+Rerun setup:
 
 ```bash
-./configure-textme.sh
+./linux/configure-textme.sh
 ```
 
-### Option 3: Manual terminal start
+### macOS
+
+Make scripts executable once:
+
+```bash
+chmod +x macos/*.sh
+```
+
+Start:
+
+```bash
+./macos/start-textme.sh
+```
+
+Rerun setup:
+
+```bash
+./macos/configure-textme.sh
+```
+
+### Manual terminal start
 
 ```bash
 npm install
@@ -126,12 +147,6 @@ If port `3000` is selected:
 
 For other devices on the same LAN:
 - `http://<HOST_LAN_IP>:PORT`
-
-Example:
-
-```text
-http://192.168.1.136:3000
-```
 
 ## Pairing flow
 
@@ -158,92 +173,10 @@ This works both ways between paired users.
 - Restarting the server does not remove pairing
 - If a user creates a new PIN and pairs with a different user, the old pairing is removed cleanly
 
-## LAN-only protection
-
-- The app blocks non-LAN clients
-- It is intended for private local-network use only
-- Files are stored locally on the host machine under `data/uploads`
-
-## Windows helper scripts
-
-Start hidden server:
-
-```bat
-start-textme.bat
-```
-
-Stop server:
-
-```bat
-stop-textme.bat
-```
-
-Rerun setup:
-
-```bat
-configure-textme.bat
-```
-
-Add hosts entry:
-
-```bat
-add-hosts-textme.bat
-```
-
-Remove hosts entry:
-
-```bat
-remove-hosts-textme.bat
-```
-
-## Linux and macOS helper scripts
-
-Start hidden/background server:
-
-```bash
-./start-textme.sh
-```
-
-Stop server:
-
-```bash
-./stop-textme.sh
-```
-
-Rerun setup:
-
-```bash
-./configure-textme.sh
-```
-
-Add hosts entry:
-
-```bash
-./add-hosts-textme.sh
-```
-
-Remove hosts entry:
-
-```bash
-./remove-hosts-textme.sh
-```
-
-Linux login startup:
-
-```bash
-./install-autostart-linux.sh
-```
-
-macOS login startup:
-
-```bash
-./install-autostart-macos.sh
-```
-
 ## Notes
 
 - `text.me` from the hosts file works only on the machine where you added it
 - Phones and tablets usually connect using the host LAN IP unless your network has local DNS for `text.me`
 - To open just `http://text.me` without a port, use port `80`
 - If another app already uses port `80`, choose `3000` or a custom port
-- On Unix systems, `sudo` is required to edit `/etc/hosts`
+- On Linux/macOS, `sudo` is required to edit `/etc/hosts`

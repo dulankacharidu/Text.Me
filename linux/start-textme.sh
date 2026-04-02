@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DATA_DIR="$APP_DIR/data"
 CONFIG_FILE="$DATA_DIR/runtime-config.env"
-SETUP_MARKER="$DATA_DIR/.unix-setup-complete"
+SETUP_MARKER="$DATA_DIR/.linux-setup-complete"
 PID_FILE="$DATA_DIR/textme.pid"
 LOG_FILE="$DATA_DIR/server.log"
 HOST_ALIAS="text.me"
@@ -26,14 +27,6 @@ save_config() {
   cat > "$CONFIG_FILE" <<EOF
 export PORT="${PORT}"
 EOF
-}
-
-platform_name() {
-  case "$(uname -s)" in
-    Darwin) echo "macOS" ;;
-    Linux) echo "Linux" ;;
-    *) echo "Unix" ;;
-  esac
 }
 
 default_url() {
@@ -65,8 +58,6 @@ open_browser() {
   url="$(default_url)"
   if command -v xdg-open >/dev/null 2>&1; then
     xdg-open "$url" >/dev/null 2>&1 || true
-  elif command -v open >/dev/null 2>&1; then
-    open "$url" >/dev/null 2>&1 || true
   fi
 }
 
@@ -97,14 +88,9 @@ prompt_optional_setup() {
   [[ "$QUIET_MODE" == "1" ]] && return 0
 
   echo
-  read -r -p "Add Text.Me LAN to $(platform_name) login startup? [y/N]: " startup_reply
+  read -r -p "Add Text.Me LAN to Linux login startup? [y/N]: " startup_reply
   case "$startup_reply" in
-    [yY]|[yY][eE][sS])
-      case "$(uname -s)" in
-        Linux) "$APP_DIR/install-autostart-linux.sh" ;;
-        Darwin) "$APP_DIR/install-autostart-macos.sh" ;;
-      esac
-      ;;
+    [yY]|[yY][eE][sS]) "$SCRIPT_DIR/install-autostart-linux.sh" ;;
   esac
 
   echo
@@ -116,19 +102,12 @@ prompt_optional_setup() {
   fi
   read -r -p "Add $HOST_ALIAS to /etc/hosts? [y/N]: " hosts_reply
   case "$hosts_reply" in
-    [yY]|[yY][eE][sS]) "$APP_DIR/add-hosts-textme.sh" ;;
+    [yY]|[yY][eE][sS]) "$SCRIPT_DIR/add-hosts-textme.sh" ;;
   esac
 }
 
-command -v node >/dev/null 2>&1 || {
-  echo "[ERROR] Node.js is not installed or not on PATH."
-  exit 1
-}
-
-command -v npm >/dev/null 2>&1 || {
-  echo "[ERROR] npm is not installed or not on PATH."
-  exit 1
-}
+command -v node >/dev/null 2>&1 || { echo "[ERROR] Node.js is not installed or not on PATH."; exit 1; }
+command -v npm >/dev/null 2>&1 || { echo "[ERROR] npm is not installed or not on PATH."; exit 1; }
 
 if [[ ! -d "$APP_DIR/node_modules" ]]; then
   echo "Installing dependencies..."
@@ -136,7 +115,7 @@ if [[ ! -d "$APP_DIR/node_modules" ]]; then
   prompt_optional_setup
   touch "$SETUP_MARKER"
 elif [[ ! -f "$SETUP_MARKER" ]]; then
-  [[ "$QUIET_MODE" != "1" ]] && echo "First-time Unix setup options:"
+  [[ "$QUIET_MODE" != "1" ]] && echo "First-time Linux setup options:"
   prompt_optional_setup
   touch "$SETUP_MARKER"
 fi
@@ -144,7 +123,6 @@ fi
 if is_running; then
   echo "Text.Me LAN is already running."
   echo "  $(default_url)"
-  [[ -f /etc/hosts ]] && echo "  $(alias_url)"
   open_browser
   exit 0
 fi

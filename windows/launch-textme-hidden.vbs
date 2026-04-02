@@ -4,7 +4,7 @@ Dim shell, fso, appDir, command, configFile, port
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 
-appDir = fso.GetParentFolderName(WScript.ScriptFullName)
+appDir = fso.GetParentFolderName(fso.GetParentFolderName(WScript.ScriptFullName))
 configFile = appDir & "\data\runtime-config.cmd"
 port = "80"
 

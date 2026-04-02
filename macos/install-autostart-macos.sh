@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 PLIST_FILE="$LAUNCH_AGENTS_DIR/com.dulankacharidu.textme.plist"
 
@@ -18,7 +19,7 @@ cat > "$PLIST_FILE" <<EOF
   <array>
     <string>/bin/bash</string>
     <string>-lc</string>
-    <string>cd "$APP_DIR" && "$APP_DIR/start-textme.sh" --quiet</string>
+    <string>cd "$APP_DIR" && "$SCRIPT_DIR/start-textme.sh" --quiet</string>
   </array>
   <key>WorkingDirectory</key>
   <string>$APP_DIR</string>

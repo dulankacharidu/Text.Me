@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$hosts = Join-Path $env:WINDIR 'System32\drivers\etc\hosts'; $command = '$path = """' + $hosts + '"""; $lines = Get-Content -Path $path -ErrorAction SilentlyContinue; if ($null -eq $lines) { exit 0 }; $filtered = $lines | Where-Object { $_ -notmatch ""(^|\s)text\.me(\s|$)"" }; Set-Content -Path $path -Value $filtered'; Start-Process PowerShell -Verb RunAs -Wait -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-Command', $command"
 
