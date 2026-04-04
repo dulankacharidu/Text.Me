@@ -1,5 +1,7 @@
 # Text.Me v1.2.0 Updated
 
+ <center><img src="img/Text.me_Poster.jpeg" /> </center>
+ 
 Text.Me is a LAN-only offline messaging and note-sharing app for:
 - Windows PCs
 - Linux PCs
@@ -39,6 +41,14 @@ It is designed for private local-network use, with live sync between paired devi
 - Added Linux and macOS launcher/support scripts
 - Cleaned repository structure into platform folders: `windows/`, `linux/`, `macos/`
 - Restyled the UI and footer branding
+
+## Main Web Panel
+
+ <center><img src="Webpanel_v1.2.PNG.png" /> </center>
+
+ ## Main Mobile Panel
+
+  <center><img src="Mobile_version.png" /> </center>
 
 ## Repository structure
 
@@ -180,3 +190,6 @@ This works both ways between paired users.
 - To open just `http://text.me` without a port, use port `80`
 - If another app already uses port `80`, choose `3000` or a custom port
 - On Linux/macOS, `sudo` is required to edit `/etc/hosts`
+- iF there have any issues problems vulnerables please make Pull request or send me on vcreation.lk@gmail.com or https://fb.com/dulankacharidu
+
+Thank You Have a Nice day !!!
