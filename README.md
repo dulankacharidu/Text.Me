@@ -1,6 +1,6 @@
 # Text.Me v1.2.0 Updated
 
- <center><img src="https://github.com/dulankacharidu/Text.Me/tree/main/img/Text.me_Poster.jpeg" /> </center>
+ <center><img src="https://github.com/dulankacharidu/Text.Me/tree/main/img/Text.me_Poster.jpg" /> </center>
  
 Text.Me is a LAN-only offline messaging and note-sharing app for:
 - Windows PCs
