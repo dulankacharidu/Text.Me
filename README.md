@@ -1,6 +1,7 @@
 # Text.Me v1.2.0 Updated
 
-<center> <img width="975" height="1000" alt="Webpanel" src="https://github.com/user-attachments/assets/4d7d4e5d-fd52-444e-b55d-b07e2742cbed" /></center>
+<center> ![Text me_Poster](https://github.com/user-attachments/assets/64e09455-134c-46d1-af01-b5f8f8e3e6e2)
+</center>
 
 Text.Me is a LAN-only offline messaging and note-sharing app for:
 - Windows PCs
@@ -44,11 +45,13 @@ It is designed for private local-network use, with live sync between paired devi
 
 ## Main Web Panel
 
- <center><img src="https://github.com/dulankacharidu/Text.Me/tree/main/img/Webpanel_v1.2.PNG.png" /> </center>
+ <center> <img width="560" height="720" alt="Webpanel v1 2" src="https://github.com/user-attachments/assets/25af043f-d0db-4a40-bd5a-25249495050e" />
+</center>
 
  ## Main Mobile Panel
 
-  <center><img src="https://github.com/dulankacharidu/Text.Me/tree/main/img/Mobile_version.png" /> </center>
+  <center><img width="450" height="720" alt="Mobile_version" src="https://github.com/user-attachments/assets/48df2c89-bced-4f49-8331-b41280fe62d0" />
+ </center>
 
 ## Repository structure
 
