@@ -86,6 +86,7 @@ macOS files:
 ## Quick start
 
 ### Windows
+Download: https://github.com/dulankacharidu/Text.Me/archive/refs/heads/main.zip
 
 Double-click:
 
@@ -100,28 +101,32 @@ windows\configure-textme.bat
 ```
 
 ### Linux
-
+Download :
 Make scripts executable once:
 
+'''bash
+sudo git clone https://github.com/dulankacharidu/Text.Me.git
+
 ```bash
-chmod +x linux/*.sh
+sudo chmod +x linux/*.sh
 ```
 
 Start:
 
 ```bash
-./linux/start-textme.sh
+sudo ./linux/start-textme.sh
 ```
 
 Rerun setup:
 
 ```bash
-./linux/configure-textme.sh
+sudo ./linux/configure-textme.sh
 ```
 
 ### macOS
 
 Make scripts executable once:
+Download:
 
 ```bash
 chmod +x macos/*.sh
