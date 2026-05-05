@@ -101,12 +101,14 @@ windows\configure-textme.bat
 ```
 
 ### Linux
-Download :
+
 Make scripts executable once:
+Download :
 
-'''bash
+```bash
 sudo git clone https://github.com/dulankacharidu/Text.Me.git
-
+```
+Give Permision : 
 ```bash
 sudo chmod +x linux/*.sh
 ```
