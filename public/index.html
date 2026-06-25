@@ -10,21 +10,28 @@
 <body>
   <div class="app-shell">
     <section class="hero">
-      <p class="eyebrow">Offline LAN Local Texting ..</p>
+      <p class="eyebrow">Offline LAN local texting ..</p>
       <h1>Text.Me</h1>
-      <p class="subtitle">Live notes, file sharing, and handwriting sync across Windows, iPhone, and Android on the same local network.</p>
-      <p class="hint">LAN only. After first pairing, devices reconnect automatically. Use a PIN only when connecting to a new partner.</p>
+      <p class="subtitle">Live notes, file sharing, handwriting sync, and shared sessions across Windows, iPhone, and Android on the same local network.</p>
+      <p class="hint">LAN only. After first pairing, devices reconnect automatically. Use a session code when adding new people to the same chat room.</p>
     </section>
 
     <main class="app">
       <section class="card status-card">
         <div id="status" class="status-pill">Connecting...</div>
         <div class="pairing">
-          <button id="createCodeBtn" class="primary-btn">Create PIN</button>
-          <input id="joinCodeInput" placeholder="Enter PIN" maxlength="6" />
-          <button id="joinCodeBtn">Join PIN</button>
+          <button id="createCodeBtn" class="primary-btn">Create Session Code</button>
+          <input id="joinCodeInput" placeholder="Enter 4-digit code" maxlength="4" inputmode="numeric" />
+          <button id="joinCodeBtn">Join Session</button>
         </div>
         <div id="pairCode" class="pair-code"></div>
+        <div id="qrWrap" class="qr-wrap hidden">
+          <img id="qrImage" alt="Session QR code" />
+          <div class="qr-text">
+            <strong>Scan to join instantly</strong>
+            <span>The QR opens this session in a browser and auto-joins it.</span>
+          </div>
+        </div>
       </section>
 
       <section class="toolbar card">
@@ -38,9 +45,9 @@
       <section class="editor card">
         <textarea id="text" placeholder="Type or paste text here..."></textarea>
         <div class="upload-row">
-          <label class="upload-btn" for="fileInput">Upload File</label>
+          <label class="upload-btn" for="fileInput">Upload Photos / Files</label>
           <button id="downloadNextBtn" type="button">Download File</button>
-          <input id="fileInput" type="file" />
+          <input id="fileInput" type="file" multiple accept="image/*,video/*,audio/*,application/*" />
           <span id="uploadStatus" class="upload-status">Files stay on your local network server.</span>
         </div>
         <div id="incomingFiles" class="incoming-files"></div>
