@@ -25,6 +25,12 @@ Open on host machine:
 Open from phone in same LAN:
 - `http://<HOST_LAN_IP>:3000`
 
+
+## Easy start on Windows (.bat)
+1. Double-click `start-textme.bat` in this project folder.
+2. It will check Node.js, run `npm install`, and start the server automatically.
+3. Open `http://localhost:3000` on your PC.
+
 ## Pairing flow
 1. If devices were paired before: open app on both devices and it auto-connects.
 2. If not paired yet: on first device click **Create PIN**.
