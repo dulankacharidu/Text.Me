@@ -1,4 +1,4 @@
-const CACHE = 'textme-v2';
+const CACHE = 'textme-v3';
 const ASSETS = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
