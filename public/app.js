@@ -15,6 +15,8 @@
   const createCodeBtn = document.getElementById('createCodeBtn');
   const joinCodeBtn = document.getElementById('joinCodeBtn');
   const joinCodeInput = document.getElementById('joinCodeInput');
+  const qrWrap = document.getElementById('qrWrap');
+  const qrImage = document.getElementById('qrImage');
   const textEl = document.getElementById('text');
   const fileInput = document.getElementById('fileInput');
   const downloadNextBtn = document.getElementById('downloadNextBtn');
@@ -37,7 +39,15 @@
   let drawMode = false;
   let currentStroke = [];
   let downloadedAttachments = loadDownloadedAttachments();
+  let reconnectTimer = null;
+  let reconnectDelay = 1000;
   const origin = window.location.origin || `${window.location.protocol}//${window.location.host}`;
+  fileInput.multiple = true;
+  fileInput.accept = 'image/*,video/*,audio/*,application/*';
+  joinCodeInput.placeholder = 'Enter 4-digit code';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoJoinCode = (urlParams.get('join') || urlParams.get('code') || '').trim().slice(0, 4);
 
   function loadDownloadedAttachments() {
     try {
@@ -56,6 +66,25 @@
     statusEl.textContent = msg;
   }
 
+  function setQr(code) {
+    if (!code) {
+      qrWrap.classList.add('hidden');
+      qrImage.removeAttribute('src');
+      return;
+    }
+    qrImage.src = new URL(`/api/pair/qr/${encodeURIComponent(code)}`, origin).toString();
+    qrWrap.classList.remove('hidden');
+  }
+
+  function describeSession(sessionCode, memberCount, partnerOnline) {
+    if (!sessionCode) return 'Not paired yet on this LAN. Create or join a session code.';
+    const people = Number.isFinite(memberCount) ? memberCount : 0;
+    if (partnerOnline) {
+      return `Session ${sessionCode} is live with ${people} people online.`;
+    }
+    return `Session ${sessionCode} is saved. Waiting for others to join...`;
+  }
+
   function showSticky(msg = 'New live update from your partner.') {
     sticky.textContent = msg;
     sticky.classList.remove('hidden');
@@ -71,7 +100,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, (char) => ({
+    return String(value).replace(/[&<>\"']/g, (char) => ({
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
@@ -216,8 +245,7 @@
   async function uploadFile(file) {
     if (!file) return;
     if (file.size > 15 * 1024 * 1024) {
-      uploadStatusEl.textContent = 'File too large. Max size is 15 MB.';
-      fileInput.value = '';
+      uploadStatusEl.textContent = `${file.name} is too large. Max size is 15 MB.`;
       return;
     }
 
@@ -260,29 +288,62 @@
     notebook.pages[pageIndex] = page;
     renderPage();
     uploadStatusEl.textContent = `${file.name} uploaded.`;
-    fileInput.value = '';
+  }
+
+  async function joinSessionByCode(code) {
+    const cleanCode = String(code || '').replace(/\D/g, '').slice(0, 4);
+    if (cleanCode.length !== 4) {
+      throw new Error('Enter a 4-digit code');
+    }
+
+    joinCodeInput.value = cleanCode;
+    const pairJoinUrl = new URL('/api/pair/join', origin).toString();
+    const res = await fetch(pairJoinUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, code: cleanCode }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Join failed');
+    }
+
+    pairCodeEl.textContent = `Joined session ${json.code}`;
+    setQr(json.code);
+    await loadStatus();
   }
 
   function connectSocket() {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${wsProtocol}//${location.host}/?deviceId=${encodeURIComponent(deviceId)}`);
 
-    ws.onopen = () => updateStatus('Connected. Loading pair info...');
+    ws.onopen = () => {
+      reconnectDelay = 1000;
+      updateStatus('Connected. Loading session info...');
+    };
 
     ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data);
       if (msg.type === 'presence') {
         partnerOnline = msg.online;
-        updateStatus(partnerOnline ? 'Auto-connected. Live sync active.' : 'Paired before. Auto-connect ready; waiting for partner...');
+        const people = Number.isFinite(msg.memberCount) ? msg.memberCount : 0;
+        updateStatus(partnerOnline ? `Session live with ${people} people online.` : `Session saved with ${people} people. Waiting for others...`);
       }
       if (msg.type === 'paired') {
-        updateStatus('Pair success. Next time it will auto-connect on same LAN.');
+        const people = Number.isFinite(msg.memberCount) ? msg.memberCount : 0;
+        pairCodeEl.textContent = msg.code ? `Session code: ${msg.code}` : 'Session connected.';
+        setQr(msg.code);
+        updateStatus(partnerOnline ? `Session live with ${people} people online.` : `Session saved with ${people} people. Waiting for others...`);
       }
       if (msg.type === 'unpaired') {
         partnerOnline = false;
         resetNotebook();
-        pairCodeEl.textContent = 'This device was disconnected from its old partner.';
-        updateStatus('Not paired yet on this LAN. Create or join a PIN one time.');
+        pairCodeEl.textContent = 'This device left the previous session.';
+        updateStatus('Not paired yet on this LAN. Create or join a session code.');
       }
       if (msg.type === 'update') {
         while (notebook.pages.length <= msg.pageIndex) notebook.pages.push({ text: '', strokes: [], attachments: [] });
@@ -306,7 +367,8 @@
 
     ws.onclose = () => {
       updateStatus('Disconnected. Retrying...');
-      setTimeout(connectSocket, 1000);
+      reconnectTimer = setTimeout(connectSocket, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, 10000);
     };
   }
 
@@ -315,15 +377,17 @@
     const res = await fetch(statusUrl);
     const json = await res.json();
     if (!json.paired) {
-      updateStatus('Not paired yet on this LAN. Create or join a PIN one time.');
+      updateStatus('Not paired yet on this LAN. Create or join a session code.');
       return;
     }
 
     notebook = json.notebook || notebook;
     notebook.pages = (notebook.pages || []).map((page) => getPage(page));
     partnerOnline = json.partnerOnline;
+    pairCodeEl.textContent = `Session code: ${json.sessionCode} | ${json.memberCount} people`;
+    setQr(json.sessionCode);
     renderPage();
-    updateStatus(partnerOnline ? 'Auto-connected. Live sync active.' : 'Paired before. Auto-connect ready; waiting for partner...');
+    updateStatus(describeSession(json.sessionCode, json.memberCount, partnerOnline));
   }
 
   createCodeBtn.onclick = async () => {
@@ -334,35 +398,32 @@
       body: JSON.stringify({ deviceId }),
     });
     const json = await res.json();
-    pairCodeEl.textContent = json.code ? `PIN: ${json.code}` : (json.error || 'Could not create PIN');
+    pairCodeEl.textContent = json.code ? `Session code: ${json.code}` : (json.error || 'Could not create session');
+    setQr(json.code);
   };
 
   joinCodeBtn.onclick = async () => {
-    const code = joinCodeInput.value.trim();
-    if (code.length < 6) return;
-    const pairJoinUrl = new URL('/api/pair/join', origin).toString();
-    const res = await fetch(pairJoinUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, code }),
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      pairCodeEl.textContent = json.error || 'Join failed';
-      return;
+    try {
+      await joinSessionByCode(joinCodeInput.value.trim());
+    } catch (error) {
+      pairCodeEl.textContent = error.message || 'Join failed';
     }
-    pairCodeEl.textContent = `Connected with ${json.pairedWith.slice(0, 8)}...`;
-    await loadStatus();
   };
 
   textEl.oninput = () => setPageText(textEl.value);
   fileInput.onchange = async () => {
     try {
-      await uploadFile(fileInput.files?.[0]);
+      const files = Array.from(fileInput.files || []);
+      if (!files.length) return;
+      uploadStatusEl.textContent = `Uploading ${files.length} file${files.length === 1 ? '' : 's'}...`;
+      for (const file of files) {
+        await uploadFile(file);
+      }
+      uploadStatusEl.textContent = `${files.length} file${files.length === 1 ? '' : 's'} uploaded.`;
     } catch (error) {
       uploadStatusEl.textContent = error.message || 'Upload failed';
-      fileInput.value = '';
     }
+    fileInput.value = '';
   };
   downloadNextBtn.onclick = async () => {
     const firstPending = getPendingIncomingAttachments()[0];
@@ -453,4 +514,7 @@
 
   connectSocket();
   loadStatus();
+  if (autoJoinCode) {
+    joinSessionByCode(autoJoinCode).catch(() => {});
+  }
 })();

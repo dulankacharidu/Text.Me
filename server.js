@@ -5,6 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const net = require('net');
 const WebSocket = require('ws');
+const QRCode = require('qrcode');
 
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -16,6 +17,8 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const app = express();
 app.use(express.json({ limit: '25mb' }));
+let needsMigrationSave = false;
+const joinAttempts = new Map();
 
 function normalizeRemoteAddress(addr = '') {
   if (!addr) return '';
@@ -53,23 +56,58 @@ app.use((req, res, next) => {
       error: 'LAN only: connect from same local network. Internet access is blocked.',
     });
   }
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   return next();
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 const defaultState = {
-  links: {},
+  sessions: {},
   notebooks: {},
+  memberships: {},
 };
 
 function loadState() {
   try {
     if (!fs.existsSync(STATE_FILE)) return structuredClone(defaultState);
     const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-    return {
-      links: data.links || {},
+    const state = {
+      sessions: data.sessions || {},
       notebooks: data.notebooks || {},
+      memberships: data.memberships || {},
+    };
+
+    if (data.links && !Object.keys(state.sessions).length) {
+      needsMigrationSave = true;
+      const seen = new Set();
+      for (const [deviceA, deviceB] of Object.entries(data.links)) {
+        const pairKey = normalizedPairKey(deviceA, deviceB);
+        if (seen.has(pairKey)) continue;
+        seen.add(pairKey);
+        const sessionId = crypto.randomUUID();
+        let code = randomCode();
+        while (Object.values(state.sessions).some((session) => session.code === code)) {
+          code = randomCode();
+        }
+        state.sessions[sessionId] = {
+          code,
+          members: [deviceA, deviceB],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        state.memberships[deviceA] = sessionId;
+        state.memberships[deviceB] = sessionId;
+      }
+    }
+
+    return {
+      sessions: state.sessions,
+      notebooks: state.notebooks,
+      memberships: state.memberships,
     };
   } catch {
     return structuredClone(defaultState);
@@ -82,26 +120,64 @@ function saveState() {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
+if (needsMigrationSave) {
+  saveState();
+}
+
 function normalizedPairKey(a, b) {
   return [a, b].sort().join('::');
 }
 
-function unlinkDevice(deviceId) {
-  const partnerId = state.links[deviceId];
-  if (!partnerId) return null;
-
-  delete state.links[deviceId];
-  if (state.links[partnerId] === deviceId) {
-    delete state.links[partnerId];
-  }
-
-  sendTo(deviceId, { type: 'unpaired' });
-  sendTo(partnerId, { type: 'unpaired' });
-  return partnerId;
+function randomCode() {
+  return String(crypto.randomInt(1000, 10000));
 }
 
-function ensureNotebook(deviceA, deviceB) {
-  const key = normalizedPairKey(deviceA, deviceB);
+function cleanSession(sessionId) {
+  const session = state.sessions[sessionId];
+  if (!session) return;
+  session.members = (session.members || []).filter(Boolean);
+  if (!session.members.length) {
+    delete state.sessions[sessionId];
+  }
+}
+
+function getSessionId(deviceId) {
+  return state.memberships[deviceId] || null;
+}
+
+function getSession(deviceId) {
+  const sessionId = getSessionId(deviceId);
+  if (!sessionId) return null;
+  const session = state.sessions[sessionId];
+  if (!session) {
+    delete state.memberships[deviceId];
+    return null;
+  }
+  session.members = Array.from(new Set((session.members || []).filter((memberId) => memberId && state.memberships[memberId] === sessionId)));
+  if (!session.members.includes(deviceId)) {
+    session.members.push(deviceId);
+  }
+  state.memberships[deviceId] = sessionId;
+  return { sessionId, session };
+}
+
+function createSession() {
+  const sessionId = crypto.randomUUID();
+  let code = randomCode();
+  while (Object.values(state.sessions).some((session) => session.code === code)) {
+    code = randomCode();
+  }
+  state.sessions[sessionId] = {
+    code,
+    members: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  return sessionId;
+}
+
+function ensureNotebook(sessionId) {
+  const key = sessionId;
   if (!state.notebooks[key]) {
     state.notebooks[key] = {
       updatedAt: new Date().toISOString(),
@@ -116,7 +192,6 @@ function ensureNotebook(deviceA, deviceB) {
   return { key, notebook: state.notebooks[key] };
 }
 
-const pendingCodes = new Map();
 const socketsByDevice = new Map();
 
 function sendTo(deviceId, payload) {
@@ -126,69 +201,133 @@ function sendTo(deviceId, payload) {
   }
 }
 
-function randomCode() {
-  return String(crypto.randomInt(100000, 999999));
+function sendSessionPresence(sessionId) {
+  const session = state.sessions[sessionId];
+  if (!session) return;
+  const onlineMembers = (session.members || []).filter((memberId) => socketsByDevice.has(memberId));
+  for (const memberId of session.members || []) {
+    sendTo(memberId, {
+      type: 'presence',
+      deviceId: memberId,
+      sessionId,
+      online: onlineMembers.length > 1,
+      onlineMembers: onlineMembers.filter((id) => id !== memberId),
+      memberCount: session.members.length,
+    });
+  }
+}
+
+function removeDeviceFromSession(deviceId, notify = true) {
+  const sessionId = state.memberships[deviceId];
+  if (!sessionId) return null;
+  const session = state.sessions[sessionId];
+  delete state.memberships[deviceId];
+  if (!session) return null;
+
+  session.members = (session.members || []).filter((memberId) => memberId !== deviceId);
+  session.updatedAt = new Date().toISOString();
+  if (!session.members.length) {
+    delete state.sessions[sessionId];
+    delete state.notebooks[sessionId];
+  } else if (notify) {
+    sendSessionPresence(sessionId);
+  }
+  return sessionId;
 }
 
 app.post('/api/pair/create', (req, res) => {
   const { deviceId } = req.body;
   if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
 
-  unlinkDevice(deviceId);
+  removeDeviceFromSession(deviceId);
+  const sessionId = createSession();
+  state.sessions[sessionId].members.push(deviceId);
+  state.memberships[deviceId] = sessionId;
+  saveState();
+  res.json({ code: state.sessions[sessionId].code, expiresInSeconds: null, sessionId });
+});
 
-  let code = randomCode();
-  while (pendingCodes.has(code)) code = randomCode();
+app.get('/api/pair/qr/:code', async (req, res) => {
+  const code = String(req.params.code || '').trim();
+  const sessionEntry = Object.entries(state.sessions).find(([, session]) => String(session.code) === code);
+  if (!sessionEntry) {
+    return res.status(404).send('Session not found');
+  }
 
-  pendingCodes.set(code, { initiator: deviceId, expiresAt: Date.now() + 5 * 60 * 1000 });
-  res.json({ code, expiresInSeconds: 300 });
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const joinUrl = `${baseUrl}/?join=${encodeURIComponent(code)}`;
+  const svg = await QRCode.toString(joinUrl, {
+    type: 'svg',
+    errorCorrectionLevel: 'M',
+    margin: 1,
+    scale: 6,
+    color: {
+      dark: '#0f172a',
+      light: '#ffffff',
+    },
+  });
+
+  res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+  res.send(svg);
 });
 
 app.post('/api/pair/join', (req, res) => {
   const { deviceId, code } = req.body;
   if (!deviceId || !code) return res.status(400).json({ error: 'deviceId and code required' });
 
-  const info = pendingCodes.get(code);
-  if (!info || info.expiresAt < Date.now()) {
-    pendingCodes.delete(code);
+  const ipKey = normalizeRemoteAddress(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown');
+  const now = Date.now();
+  const recentAttempts = (joinAttempts.get(ipKey) || []).filter((ts) => now - ts < 60_000);
+  if (recentAttempts.length >= 10) {
+    joinAttempts.set(ipKey, recentAttempts);
+    return res.status(429).json({ error: 'Too many join attempts. Please wait a minute and try again.' });
+  }
+  recentAttempts.push(now);
+  joinAttempts.set(ipKey, recentAttempts);
+
+  const sessionEntry = Object.entries(state.sessions).find(([, session]) => String(session.code) === String(code));
+  if (!sessionEntry) {
     return res.status(404).json({ error: 'Code expired or invalid' });
   }
 
-  if (info.initiator === deviceId) {
-    return res.status(400).json({ error: 'Cannot pair same device' });
+  const [sessionId, session] = sessionEntry;
+  if ((session.members || []).includes(deviceId)) {
+    state.memberships[deviceId] = sessionId;
+    saveState();
+    sendSessionPresence(sessionId);
+    return res.json({ pairedWith: sessionId, code: session.code, sessionId });
   }
 
-  unlinkDevice(info.initiator);
-  unlinkDevice(deviceId);
-
-  state.links[info.initiator] = deviceId;
-  state.links[deviceId] = info.initiator;
-  pendingCodes.delete(code);
-
-  ensureNotebook(info.initiator, deviceId);
+  removeDeviceFromSession(deviceId, false);
+  session.members = Array.from(new Set([...(session.members || []), deviceId]));
+  session.updatedAt = new Date().toISOString();
+  state.memberships[deviceId] = sessionId;
+  ensureNotebook(sessionId);
   saveState();
 
-  sendTo(info.initiator, { type: 'paired', with: deviceId });
-  sendTo(deviceId, { type: 'paired', with: info.initiator });
+  for (const memberId of session.members || []) {
+    sendTo(memberId, { type: 'paired', sessionId, code: session.code, memberCount: session.members.length });
+  }
+  sendSessionPresence(sessionId);
 
-  res.json({ pairedWith: info.initiator });
+  res.json({ pairedWith: sessionId, code: session.code, sessionId });
 });
 
 app.get('/api/status/:deviceId', (req, res) => {
   const deviceId = req.params.deviceId;
-  const partnerId = state.links[deviceId] || null;
+  const sessionInfo = getSession(deviceId);
+  if (!sessionInfo) return res.json({ paired: false });
 
-  if (!partnerId) return res.json({ paired: false });
-  if (state.links[partnerId] !== deviceId) {
-    delete state.links[deviceId];
-    saveState();
-    return res.json({ paired: false });
-  }
-
-  const { notebook } = ensureNotebook(deviceId, partnerId);
+  const { sessionId, session } = sessionInfo;
+  const { notebook } = ensureNotebook(sessionId);
+  const otherMembers = (session.members || []).filter((memberId) => memberId !== deviceId);
   res.json({
     paired: true,
-    partnerId,
-    partnerOnline: socketsByDevice.has(partnerId),
+    sessionId,
+    sessionCode: session.code,
+    memberCount: session.members.length,
+    partnerOnline: otherMembers.some((memberId) => socketsByDevice.has(memberId)),
+    onlineMembers: otherMembers.filter((memberId) => socketsByDevice.has(memberId)),
     notebook,
   });
 });
@@ -199,10 +338,11 @@ app.post('/api/upload', (req, res) => {
     return res.status(400).json({ error: 'deviceId, pageIndex, fileName and contentBase64 required' });
   }
 
-  const partnerId = state.links[deviceId];
-  if (!partnerId) {
+  const sessionInfo = getSession(deviceId);
+  if (!sessionInfo) {
     return res.status(400).json({ error: 'Device is not paired' });
   }
+  const { sessionId, session } = sessionInfo;
 
   let buffer;
   try {
@@ -226,7 +366,7 @@ app.post('/api/upload', (req, res) => {
   const filePath = path.join(UPLOADS_DIR, storedName);
   fs.writeFileSync(filePath, buffer);
 
-  const { notebook } = ensureNotebook(deviceId, partnerId);
+  const { notebook } = ensureNotebook(sessionId);
   while (notebook.pages.length <= pageIndex) {
     notebook.pages.push({ text: '', strokes: [], attachments: [] });
   }
@@ -245,15 +385,18 @@ app.post('/api/upload', (req, res) => {
   notebook.updatedAt = new Date().toISOString();
   saveState();
 
-  sendTo(partnerId, {
-    type: 'update',
-    from: deviceId,
-    pageIndex,
-    text: notebook.pages[pageIndex].text,
-    strokes: notebook.pages[pageIndex].strokes,
-    attachments: notebook.pages[pageIndex].attachments,
-    updatedAt: notebook.updatedAt,
-  });
+  for (const memberId of session.members || []) {
+    if (memberId === deviceId) continue;
+    sendTo(memberId, {
+      type: 'update',
+      from: deviceId,
+      pageIndex,
+      text: notebook.pages[pageIndex].text,
+      strokes: notebook.pages[pageIndex].strokes,
+      attachments: notebook.pages[pageIndex].attachments,
+      updatedAt: notebook.updatedAt,
+    });
+  }
 
   return res.json({ attachment });
 });
@@ -286,10 +429,8 @@ wss.on('connection', (ws, req) => {
 
   socketsByDevice.set(deviceId, ws);
 
-  const partnerId = state.links[deviceId];
-  if (partnerId) {
-    sendTo(partnerId, { type: 'presence', deviceId, online: true });
-  }
+  const sessionInfo = getSession(deviceId);
+  if (sessionInfo) sendSessionPresence(sessionInfo.sessionId);
 
   ws.on('message', (raw) => {
     let msg;
@@ -299,12 +440,13 @@ wss.on('connection', (ws, req) => {
       return;
     }
 
-    const partner = state.links[deviceId];
-    if (!partner) return;
+    const sessionInfo = getSession(deviceId);
+    if (!sessionInfo) return;
+    const { sessionId, session } = sessionInfo;
 
     if (msg.type === 'update') {
       const { pageIndex, text, strokes } = msg;
-      const { notebook } = ensureNotebook(deviceId, partner);
+      const { notebook } = ensureNotebook(sessionId);
 
       while (notebook.pages.length <= pageIndex) {
         notebook.pages.push({ text: '', strokes: [], attachments: [] });
@@ -315,32 +457,38 @@ wss.on('connection', (ws, req) => {
       notebook.updatedAt = new Date().toISOString();
       saveState();
 
-      sendTo(partner, {
-        type: 'update',
-        from: deviceId,
-        pageIndex,
-        text: notebook.pages[pageIndex].text,
-        strokes: notebook.pages[pageIndex].strokes,
-        attachments: notebook.pages[pageIndex].attachments,
-        updatedAt: notebook.updatedAt,
-      });
+      for (const memberId of session.members || []) {
+        if (memberId === deviceId) continue;
+        sendTo(memberId, {
+          type: 'update',
+          from: deviceId,
+          pageIndex,
+          text: notebook.pages[pageIndex].text,
+          strokes: notebook.pages[pageIndex].strokes,
+          attachments: notebook.pages[pageIndex].attachments,
+          updatedAt: notebook.updatedAt,
+        });
+      }
     }
 
     if (msg.type === 'page:add') {
-      const { notebook } = ensureNotebook(deviceId, partner);
+      const { notebook } = ensureNotebook(sessionId);
       notebook.pages.push({ text: '', strokes: [], attachments: [] });
       notebook.updatedAt = new Date().toISOString();
       saveState();
-      sendTo(partner, { type: 'page:add', pages: notebook.pages.length, updatedAt: notebook.updatedAt });
+      for (const memberId of session.members || []) {
+        if (memberId === deviceId) continue;
+        sendTo(memberId, { type: 'page:add', pages: notebook.pages.length, updatedAt: notebook.updatedAt });
+      }
     }
   });
 
   ws.on('close', () => {
-    socketsByDevice.delete(deviceId);
-    const partner = state.links[deviceId];
-    if (partner) {
-      sendTo(partner, { type: 'presence', deviceId, online: false });
+    if (socketsByDevice.get(deviceId) === ws) {
+      socketsByDevice.delete(deviceId);
     }
+    const sessionId = state.memberships[deviceId];
+    if (sessionId) sendSessionPresence(sessionId);
   });
 });
 
