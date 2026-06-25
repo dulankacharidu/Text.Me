@@ -223,6 +223,41 @@ textarea {
   flex-wrap: wrap;
 }
 
+.qr-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(10, 88, 202, 0.14);
+  border-radius: 18px;
+  background: rgba(10, 88, 202, 0.04);
+}
+
+.qr-wrap img {
+  width: 128px;
+  height: 128px;
+  border-radius: 14px;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.qr-text {
+  display: grid;
+  gap: 4px;
+}
+
+.qr-text strong {
+  font-size: 1rem;
+  color: #102a43;
+}
+
+.qr-text span {
+  font-size: 0.92rem;
+  color: #52657a;
+  line-height: 1.45;
+}
+
 #fileInput {
   display: none;
 }
@@ -396,6 +431,21 @@ canvas {
   .site-footer {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .pairing {
+    gap: 8px;
+  }
+
+  .qr-wrap {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .qr-wrap img {
+    width: 110px;
+    height: 110px;
+    flex: 0 0 auto;
   }
 
   input,
