@@ -166,6 +166,12 @@ If port `3000` is selected:
 For other devices on the same LAN:
 - `http://<HOST_LAN_IP>:PORT`
 
+
+## Easy start on Windows (.bat)
+1. Double-click `start-textme.bat` in this project folder.
+2. It will check Node.js, run `npm install`, and start the server automatically.
+3. Open `http://localhost:3000` on your PC.
+
 ## Pairing flow
 
 1. Open Text.Me on both devices.
